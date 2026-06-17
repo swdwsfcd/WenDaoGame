@@ -1,0 +1,1219 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>问道MMO - 后台管理系统</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            background: #1a1a2e;
+            color: #eee;
+        }
+
+        .admin-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* 侧边栏 */
+        .sidebar {
+            width: 240px;
+            background: linear-gradient(180deg, #16213e 0%, #0f3460 100%);
+            padding: 20px 0;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.3);
+        }
+
+        .sidebar h1 {
+            text-align: center;
+            color: #ffd700;
+            font-size: 1.5em;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #333;
+            margin-bottom: 20px;
+        }
+
+        .menu-item {
+            padding: 14px 24px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-left: 4px solid transparent;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .menu-item:hover {
+            background: rgba(255, 215, 0, 0.1);
+            border-left-color: #ffd700;
+        }
+
+        .menu-item.active {
+            background: rgba(255, 215, 0, 0.15);
+            border-left-color: #ffd700;
+            color: #ffd700;
+        }
+
+        .menu-icon { font-size: 1.3em; }
+
+        /* 主内容区 */
+        .main-content {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #333;
+        }
+
+        .page-header h2 {
+            color: #ffd700;
+            font-size: 1.8em;
+        }
+
+        .stat-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #16213e, #0f3460);
+            border: 2px solid #333;
+            border-radius: 12px;
+            padding: 20px;
+            transition: all 0.3s;
+        }
+
+        .stat-card:hover {
+            border-color: #ffd700;
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(255, 215, 0, 0.2);
+        }
+
+        .stat-label {
+            color: #aaa;
+            font-size: 0.9em;
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #ffd700;
+        }
+
+        .stat-change {
+            font-size: 0.85em;
+            margin-top: 5px;
+        }
+
+        .stat-change.up { color: #4f4; }
+        .stat-change.down { color: #f44; }
+
+        /* 表格 */
+        .data-table {
+            width: 100%;
+            background: #16213e;
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        .data-table table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .data-table th {
+            background: #0f3460;
+            padding: 12px 16px;
+            text-align: left;
+            color: #ffd700;
+            font-weight: bold;
+        }
+
+        .data-table td {
+            padding: 10px 16px;
+            border-bottom: 1px solid #222;
+        }
+
+        .data-table tr:hover {
+            background: rgba(255, 215, 0, 0.05);
+        }
+
+        /* 按钮 */
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.9em;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #ffd700, #ff6b35);
+            color: #1a1a2e;
+            font-weight: bold;
+        }
+
+        .btn-danger {
+            background: #e94560;
+            color: #fff;
+        }
+
+        .btn-secondary {
+            background: #333;
+            color: #eee;
+        }
+
+        .btn:hover { transform: translateY(-1px); }
+
+        /* 表单 */
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            color: #aaa;
+            margin-bottom: 6px;
+            font-size: 0.9em;
+        }
+
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            background: #0a0a1e;
+            border: 2px solid #333;
+            border-radius: 6px;
+            color: #eee;
+            font-family: inherit;
+            font-size: 0.95em;
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: #ffd700;
+        }
+
+        /* 图表容器 */
+        .chart-container {
+            background: #16213e;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            height: 300px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #666;
+            font-size: 1.2em;
+        }
+
+        /* 页面 */
+        .page { display: none; }
+        .page.active { display: block; }
+
+        /* 搜索栏 */
+        .search-bar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .search-bar input {
+            flex: 1;
+            padding: 10px 16px;
+            background: #0a0a1e;
+            border: 2px solid #333;
+            border-radius: 8px;
+            color: #eee;
+            font-family: inherit;
+        }
+
+        /* 模态框 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: #16213e;
+            border: 3px solid #ffd700;
+            border-radius: 16px;
+            padding: 30px;
+            min-width: 500px;
+            max-width: 90%;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-header h3 {
+            color: #ffd700;
+            font-size: 1.4em;
+        }
+
+        .close-modal {
+            background: #e94560;
+            border: none;
+            color: #fff;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.2em;
+        }
+
+        /* 徽章 */
+        .badge {
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-size: 0.8em;
+        }
+
+        .badge-success { background: #1a4; color: #fff; }
+        .badge-danger { background: #a14; color: #fff; }
+        .badge-warning { background: #a61; color: #fff; }
+        .badge-info { background: #146; color: #fff; }
+
+        /* 分页 */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 5px;
+            margin-top: 20px;
+        }
+
+        .page-btn {
+            padding: 6px 12px;
+            background: #333;
+            border: none;
+            border-radius: 4px;
+            color: #eee;
+            cursor: pointer;
+        }
+
+        .page-btn.active {
+            background: #ffd700;
+            color: #1a1a2e;
+            font-weight: bold;
+        }
+
+        /* 日志 */
+        .log-viewer {
+            background: #0a0a1e;
+            border-radius: 8px;
+            padding: 15px;
+            font-family: 'Consolas', monospace;
+            font-size: 0.85em;
+            line-height: 1.6;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .log-entry { margin-bottom: 5px; }
+        .log-time { color: #666; }
+        .log-info { color: #4af; }
+        .log-warn { color: #fa4; }
+        .log-error { color: #f44; }
+    </style>
+</head>
+<body>
+    <div class="admin-container">
+        <!-- 侧边栏 -->
+        <div class="sidebar">
+            <h1>🔧 管理后台</h1>
+            <div class="menu-item active" onclick="showPage('dashboard')">
+                <span class="menu-icon">📊</span>
+                <span>数据监控</span>
+            </div>
+            <div class="menu-item" onclick="showPage('players')">
+                <span class="menu-icon">👥</span>
+                <span>玩家管理</span>
+            </div>
+            <div class="menu-item" onclick="showPage('items')">
+                <span class="menu-icon">🎁</span>
+                <span>物品管理</span>
+            </div>
+            <div class="menu-item" onclick="showPage('activities')">
+                <span class="menu-icon">🎉</span>
+                <span>活动管理</span>
+            </div>
+            <div class="menu-item" onclick="showPage('economy')">
+                <span class="menu-icon">💰</span>
+                <span>经济调控</span>
+            </div>
+            <div class="menu-item" onclick="showPage('battle')">
+                <span class="menu-icon">⚔️</span>
+                <span>战斗数据</span>
+            </div>
+            <div class="menu-item" onclick="showPage('server')">
+                <span class="menu-icon">🖥️</span>
+                <span>服务器配置</span>
+            </div>
+            <div class="menu-item" onclick="showPage('logs')">
+                <span class="menu-icon">📝</span>
+                <span>操作日志</span>
+            </div>
+            <div class="menu-item" onclick="showPage('version')">
+                <span class="menu-icon">🔄</span>
+                <span>版本管理</span>
+            </div>
+            <div class="menu-item" onclick="showPage('security')">
+                <span class="menu-icon">🔒</span>
+                <span>安全管理</span>
+            </div>
+        </div>
+
+        <!-- 主内容区 -->
+        <div class="main-content">
+            <!-- 数据监控仪表盘 -->
+            <div class="page active" id="page-dashboard">
+                <div class="page-header">
+                    <h2>📊 数据监控仪表盘</h2>
+                    <button class="btn btn-primary" onclick="refreshData()">🔄 刷新数据</button>
+                </div>
+
+                <div class="stat-cards">
+                    <div class="stat-card">
+                        <div class="stat-label">当前在线</div>
+                        <div class="stat-value" id="stat-online">127</div>
+                        <div class="stat-change up">↑ 12% 较昨日</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">今日新增用户</div>
+                        <div class="stat-value" id="stat-new-users">45</div>
+                        <div class="stat-change up">↑ 8% 较昨日</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">次日留存率</div>
+                        <div class="stat-value" id="stat-retention">68%</div>
+                        <div class="stat-change down">↓ 3% 较上周</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">今日活跃用户</div>
+                        <div class="stat-value" id="stat-active">892</div>
+                        <div class="stat-change up">↑ 15% 较昨日</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">今日战斗场次</div>
+                        <div class="stat-value" id="stat-battles">3,456</div>
+                        <div class="stat-change up">↑ 22% 较昨日</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">今日交易额</div>
+                        <div class="stat-value" id="stat-trade">12.8万</div>
+                        <div class="stat-change up">↑ 5% 较昨日</div>
+                    </div>
+                </div>
+
+                <div style="display:grid;grid-template-columns:2fr 1fr;gap:20px">
+                    <div class="chart-container" id="chart-trend">
+                        📈 在线人数趋势图（此处集成ECharts）
+                    </div>
+                    <div>
+                        <h3 style="color:#ffd700;margin-bottom:15px">⚠️ 实时告警</h3>
+                        <div style="background:#16213e;border-radius:12px;padding:15px">
+                            <div style="padding:10px;border-left:3px solid #f44;margin-bottom:10px">
+                                <div style="font-weight:bold;color:#f44">服务器CPU使用率过高</div>
+                                <div style="font-size:0.85em;color:#aaa">10分钟前 | CPU: 89%</div>
+                            </div>
+                            <div style="padding:10px;border-left:3px solid #fa4;margin-bottom:10px">
+                                <div style="font-weight:bold;color:#fa4">金币产出异常</div>
+                                <div style="font-size:0.85em;color:#aaa">30分钟前 | 超出阈值200%</div>
+                            </div>
+                            <div style="padding:10px;border-left:3px solid #4af">
+                                <div style="font-weight:bold;color:#4af">新版本下载量达标</div>
+                                <div style="font-size:0.85em;color:#aaa">1小时前 | 完成率: 85%</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="data-table" style="margin-top:20px">
+                    <h3 style="color:#ffd700;padding:15px">🏆 等级排行榜（前10）</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>排名</th>
+                                <th>玩家名</th>
+                                <th>门派</th>
+                                <th>等级</th>
+                                <th>经验</th>
+                                <th>最后登录</th>
+                            </tr>
+                        </thead>
+                        <tbody id="leaderboard-tbody">
+                            <tr><td>1</td><td>龙傲天</td><td><span style="color:#FFD700">金系</span></td><td>85</td><td>1,230,000</td><td>2分钟前</td></tr>
+                            <tr><td>2</td><td>凤九天</td><td><span style="color:#FF4500">火系</span></td><td>82</td><td>1,100,000</td><td>5分钟前</td></tr>
+                            <tr><td>3</td><td>逍遥生</td><td><span style="color:#00BFFF">水系</span></td><td>80</td><td>980,000</td><td>10分钟前</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 玩家管理 -->
+            <div class="page" id="page-players">
+                <div class="page-header">
+                    <h2>👥 玩家管理</h2>
+                    <button class="btn btn-primary" onclick="showModal('player-modal')">➕ 添加玩家</button>
+                </div>
+
+                <div class="search-bar">
+                    <input type="text" placeholder="搜索玩家名、ID..." id="player-search" onkeyup="searchPlayers()">
+                    <select id="player-filter" onchange="filterPlayers()">
+                        <option value="all">全部门派</option>
+                        <option value="金">金系</option>
+                        <option value="木">木系</option>
+                        <option value="水">水系</option>
+                        <option value="火">火系</option>
+                        <option value="土">土系</option>
+                    </select>
+                    <button class="btn btn-secondary" onclick="exportPlayers()">📥 导出数据</button>
+                </div>
+
+                <div class="data-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>用户名</th>
+                                <th>门派</th>
+                                <th>等级</th>
+                                <th>金币</th>
+                                <th>状态</th>
+                                <th>最后登录</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="players-tbody">
+                            <tr>
+                                <td>10001</td>
+                                <td>龙傲天</td>
+                                <td><span style="color:#FFD700">金系</span></td>
+                                <td>85</td>
+                                <td>125,000</td>
+                                <td><span class="badge badge-success">正常</span></td>
+                                <td>2分钟前</td>
+                                <td>
+                                    <button class="btn btn-secondary" onclick="viewPlayer(10001)">查看</button>
+                                    <button class="btn btn-danger" onclick="banPlayer(10001)">封禁</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>10002</td>
+                                <td>凤九天</td>
+                                <td><span style="color:#FF4500">火系</span></td>
+                                <td>82</td>
+                                <td>98,000</td>
+                                <td><span class="badge badge-success">正常</span></td>
+                                <td>5分钟前</td>
+                                <td>
+                                    <button class="btn btn-secondary" onclick="viewPlayer(10002)">查看</button>
+                                    <button class="btn btn-danger" onclick="banPlayer(10002)">封禁</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="pagination">
+                    <button class="page-btn active">1</button>
+                    <button class="page-btn">2</button>
+                    <button class="page-btn">3</button>
+                    <button class="page-btn">...</button>
+                    <button class="page-btn">50</button>
+                </div>
+            </div>
+
+            <!-- 物品管理 -->
+            <div class="page" id="page-items">
+                <div class="page-header">
+                    <h2>🎁 物品管理</h2>
+                    <button class="btn btn-primary" onclick="showModal('item-modal')">➕ 创建物品</button>
+                </div>
+
+                <div class="stat-cards" style="grid-template-columns:repeat(4,1fr)">
+                    <div class="stat-card">
+                        <div class="stat-label">物品总数</div>
+                        <div class="stat-value">1,256</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">今日新增</div>
+                        <div class="stat-value">12</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">装备类</div>
+                        <div class="stat-value">680</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">消耗品类</div>
+                        <div class="stat-value">576</div>
+                    </div>
+                </div>
+
+                <div class="data-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>物品ID</th>
+                                <th>名称</th>
+                                <th>类型</th>
+                                <th>品质</th>
+                                <th>使用等级</th>
+                                <th>掉落率</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>20001</td>
+                                <td>💎 龙泉剑</td>
+                                <td>武器</td>
+                                <td><span class="badge badge-warning">橙色</span></td>
+                                <td>50</td>
+                                <td>0.5%</td>
+                                <td>
+                                    <button class="btn btn-secondary">编辑</button>
+                                    <button class="btn btn-danger">删除</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>20002</td>
+                                <td>🛡️ 玄武甲</td>
+                                <td>防具</td>
+                                <td><span class="badge badge-info">紫色</span></td>
+                                <td>45</td>
+                                <td>0.8%</td>
+                                <td>
+                                    <button class="btn btn-secondary">编辑</button>
+                                    <button class="btn btn-danger">删除</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 活动管理 -->
+            <div class="page" id="page-activities">
+                <div class="page-header">
+                    <h2>🎉 活动管理</h2>
+                    <button class="btn btn-primary" onclick="showModal('activity-modal')">➕ 创建活动</button>
+                </div>
+
+                <div class="stat-cards" style="grid-template-columns:repeat(3,1fr)">
+                    <div class="stat-card">
+                        <div class="stat-label">进行中活动</div>
+                        <div class="stat-value">3</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">今日参与人数</div>
+                        <div class="stat-value">2,345</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">活动总发放奖励</div>
+                        <div class="stat-value">45万</div>
+                    </div>
+                </div>
+
+                <div class="data-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>活动名称</th>
+                                <th>类型</th>
+                                <th>开始时间</th>
+                                <th>结束时间</th>
+                                <th>参与人数</th>
+                                <th>状态</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>🔥 周末双倍经验</td>
+                                <td>经验加成</td>
+                                <td>2026-06-17</td>
+                                <td>2026-06-19</td>
+                                <td>1,234</td>
+                                <td><span class="badge badge-success">进行中</span></td>
+                                <td>
+                                    <button class="btn btn-secondary">编辑</button>
+                                    <button class="btn btn-danger">结束</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>🎁 登录送礼</td>
+                                <td>登录奖励</td>
+                                <td>2026-06-01</td>
+                                <td>2026-06-30</td>
+                                <td>5,678</td>
+                                <td><span class="badge badge-success">进行中</span></td>
+                                <td>
+                                    <button class="btn btn-secondary">编辑</button>
+                                    <button class="btn btn-danger">结束</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>⚔️ 门派争霸</td>
+                                <td>竞技赛事</td>
+                                <td>2026-06-20</td>
+                                <td>2026-06-25</td>
+                                <td>0</td>
+                                <td><span class="badge badge-warning">未开始</span></td>
+                                <td>
+                                    <button class="btn btn-secondary">编辑</button>
+                                    <button class="btn btn-primary">启用</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 经济调控 -->
+            <div class="page" id="page-economy">
+                <div class="page-header">
+                    <h2>💰 经济调控</h2>
+                    <button class="btn btn-primary" onclick="applyEconomySettings()">💾 保存设置</button>
+                </div>
+
+                <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:20px">
+                    <div class="stat-card">
+                        <h3 style="color:#ffd700;margin-bottom:15px">💰 金币系统</h3>
+                        <div class="form-group">
+                            <label>金币产出率（倍数）</label>
+                            <input type="number" value="1.0" step="0.1" id="gold-rate">
+                        </div>
+                        <div class="form-group">
+                            <label>每日金币上限</label>
+                            <input type="number" value="100000" id="gold-limit">
+                        </div>
+                        <div class="form-group">
+                            <label>金币回收税率</label>
+                            <input type="number" value="5" step="0.5" id="gold-tax"> %
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <h3 style="color:#ffd700;margin-bottom:15px">💎 元宝系统</h3>
+                        <div class="form-group">
+                            <label>元宝充值比例（1元=）</label>
+                            <input type="number" value="10" id="yuanbao-rate">
+                        </div>
+                        <div class="form-group">
+                            <label>元宝每日赠送上限</label>
+                            <input type="number" value="1000" id="yuanbao-limit">
+                        </div>
+                        <div class="form-group">
+                            <label>交易行手续费</label>
+                            <input type="number" value="3" step="0.5" id="trade-fee"> %
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <h3 style="color:#ffd700;margin-bottom:15px">🎁 掉落系统</h3>
+                        <div class="form-group">
+                            <label>装备掉落率（倍数）</label>
+                            <input type="number" value="1.0" step="0.1" id="drop-equip">
+                        </div>
+                        <div class="form-group">
+                            <label>材料掉落率（倍数）</label>
+                            <input type="number" value="1.0" step="0.1" id="drop-material">
+                        </div>
+                        <div class="form-group">
+                            <label>宠物捕捉成功率（倍数）</label>
+                            <input type="number" value="1.0" step="0.1" id="catch-rate">
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <h3 style="color:#ffd700;margin-bottom:15px">📊 经济数据</h3>
+                        <div class="stat-label">今日金币流通量</div>
+                        <div class="stat-value" style="font-size:1.5em">328万</div>
+                        <div class="stat-label" style="margin-top:15px">今日元宝充值</div>
+                        <div class="stat-value" style="font-size:1.5em">1.2万</div>
+                        <div class="stat-label" style="margin-top:15px">交易行今日订单</div>
+                        <div class="stat-value" style="font-size:1.5em">567</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 战斗数据 -->
+            <div class="page" id="page-battle">
+                <div class="page-header">
+                    <h2>⚔️ 战斗数据分析</h2>
+                </div>
+
+                <div class="stat-cards">
+                    <div class="stat-card">
+                        <div class="stat-label">今日战斗场次</div>
+                        <div class="stat-value">3,456</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">平均战斗时长</div>
+                        <div class="stat-value">2.3分</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">玩家胜率</div>
+                        <div class="stat-value">62%</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">最受欢迎技能</div>
+                        <div class="stat-value" style="font-size:1.2em">火球术</div>
+                    </div>
+                </div>
+
+                <div class="chart-container">
+                    📊 技能使用频率统计图（此处集成ECharts）
+                </div>
+
+                <div class="data-table">
+                    <h3 style="color:#ffd700;padding:15px">🐾 宠物出场率排行</h3>
+                    <table>
+                        <thead>
+                            <tr><th>排名</th><th>宠物名</th><th>类型</th><th>出场率</th><th>平均胜率</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>1</td><td>🔥 火麒麟</td><td>火系</td><td>35%</td><td>68%</td></tr>
+                            <tr><td>2</td><td>🐢 水晶龟</td><td>水系</td><td>28%</td><td>72%</td></tr>
+                            <tr><td>3</td><td>🧚 小精灵</td><td>木系</td><td>22%</td><td>65%</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 服务器配置 -->
+            <div class="page" id="page-server">
+                <div class="page-header">
+                    <h2>🖥️ 服务器配置</h2>
+                    <button class="btn btn-primary" onclick="saveServerConfig()">💾 保存配置</button>
+                </div>
+
+                <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:20px">
+                    <div class="stat-card">
+                        <h3 style="color:#ffd700;margin-bottom:15px">🌐 服务器状态</h3>
+                        <div id="server-status">
+                            <div style="display:flex;justify-content:space-between;margin-bottom:10px">
+                                <span>主服务器</span>
+                                <span class="badge badge-success">运行中</span>
+                            </div>
+                            <div style="display:flex;justify-content:space-between;margin-bottom:10px">
+                                <span>数据库</span>
+                                <span class="badge badge-success">正常</span>
+                            </div>
+                            <div style="display:flex;justify-content:space-between;margin-bottom:10px">
+                                <span>WebSocket</span>
+                                <span class="badge badge-success">正常</span>
+                            </div>
+                            <div style="display:flex;justify-content:space-between">
+                                <span>缓存服务</span>
+                                <span class="badge badge-warning">负载高</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <h3 style="color:#ffd700;margin-bottom:15px">⚙️ 服务器参数</h3>
+                        <div class="form-group">
+                            <label>最大在线人数</label>
+                            <input type="number" value="5000" id="max-online">
+                        </div>
+                        <div class="form-group">
+                            <label>战斗超时时间（秒）</label>
+                            <input type="number" value="30" id="battle-timeout">
+                        </div>
+                        <div class="form-group">
+                            <label>聊天冷却时间（秒）</label>
+                            <input type="number" value="3" id="chat-cooldown">
+                        </div>
+                    </div>
+                </div>
+
+                <div style="margin-top:20px">
+                    <button class="btn btn-secondary" onclick="restartServer()">🔄 重启服务器</button>
+                    <button class="btn btn-danger" onclick="shutdownServer()" style="margin-left:10px">⏹️ 关闭服务器</button>
+                    <button class="btn btn-primary" onclick="openNewServer()" style="margin-left:10px">➕ 开启新服</button>
+                </div>
+            </div>
+
+            <!-- 操作日志 -->
+            <div class="page" id="page-logs">
+                <div class="page-header">
+                    <h2>📝 操作日志</h2>
+                    <button class="btn btn-secondary" onclick="clearLogs()">🗑️ 清理日志</button>
+                </div>
+
+                <div class="search-bar">
+                    <input type="text" placeholder="搜索日志内容...">
+                    <select>
+                        <option>全部类型</option>
+                        <option>信息</option>
+                        <option>警告</option>
+                        <option>错误</option>
+                    </select>
+                    <input type="date" value="2026-06-17">
+                </div>
+
+                <div class="log-viewer" id="log-viewer">
+                    <div class="log-entry"><span class="log-time">[2026-06-17 13:06:21]</span> <span class="log-info">[INFO]</span> 管理员 admin 登录后台系统</div>
+                    <div class="log-entry"><span class="log-time">[2026-06-17 13:05:10]</span> <span class="log-info">[INFO]</span> 玩家 龙傲天 升级到 85 级</div>
+                    <div class="log-entry"><span class="log-time">[2026-06-17 13:00:45]</span> <span class="log-warn">[WARN]</span> 金币产出超出阈值，当前倍数: 2.3x</div>
+                    <div class="log-entry"><span class="log-time">[2026-06-17 12:55:30]</span> <span class="log-info">[INFO]</span> 活动「周末双倍经验」已启动</div>
+                    <div class="log-entry"><span class="log-time">[2026-06-17 12:50:12]</span> <span class="log-error">[ERROR]</span> 数据库连接超时，已自动重连</div>
+                    <div class="log-entry"><span class="log-time">[2026-06-17 12:40:00]</span> <span class="log-info">[INFO]</span> 管理员 admin 修改了玩家 测试账号 的金币数量</div>
+                </div>
+            </div>
+
+            <!-- 版本管理 -->
+            <div class="page" id="page-version">
+                <div class="page-header">
+                    <h2>🔄 版本管理</h2>
+                    <button class="btn btn-primary" onclick="showModal('version-modal')">📤 发布新版本</button>
+                </div>
+
+                <div class="data-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>版本号</th>
+                                <th>发布时间</th>
+                                <th>文件大小</th>
+                                <th>下载量</th>
+                                <th>状态</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>v2.3.1</td>
+                                <td>2026-06-15</td>
+                                <td>85 MB</td>
+                                <td>12,345</td>
+                                <td><span class="badge badge-success">最新版</span></td>
+                                <td>
+                                    <button class="btn btn-secondary">详情</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>v2.3.0</td>
+                                <td>2026-06-01</td>
+                                <td>82 MB</td>
+                                <td>45,678</td>
+                                <td><span class="badge badge-info">稳定版</span></td>
+                                <td>
+                                    <button class="btn btn-secondary">详情</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>v2.2.5</td>
+                                <td>2026-05-15</td>
+                                <td>78 MB</td>
+                                <td>89,012</td>
+                                <td><span class="badge badge-warning">过时</span></td>
+                                <td>
+                                    <button class="btn btn-danger">删除</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 安全管理 -->
+            <div class="page" id="page-security">
+                <div class="page-header">
+                    <h2>🔒 安全管理</h2>
+                </div>
+
+                <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:20px">
+                    <div class="stat-card">
+                        <h3 style="color:#ffd700;margin-bottom:15px">👤 管理员权限</h3>
+                        <div class="data-table">
+                            <table>
+                                <thead>
+                                    <tr><th>账号</th><th>角色</th><th>最后操作</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>admin</td>
+                                        <td><span class="badge badge-danger">超级管理员</span></td>
+                                        <td>2分钟前</td>
+                                    </tr>
+                                    <tr>
+                                        <td>gm01</td>
+                                        <td><span class="badge badge-warning">游戏管理员</span></td>
+                                        <td>1小时前</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <h3 style="color:#ffd700;margin-bottom:15px">🚫 封禁列表</h3>
+                        <div class="data-table">
+                            <table>
+                                <thead>
+                                    <tr><th>玩家ID</th><th>原因</th><th>解封时间</th><th>操作</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>10045</td>
+                                        <td>使用外挂</td>
+                                        <td>2026-07-01</td>
+                                        <td><button class="btn btn-primary">解封</button></td>
+                                    </tr>
+                                    <tr>
+                                        <td>10078</td>
+                                        <td>恶意刷金</td>
+                                        <td>永久</td>
+                                        <td><button class="btn btn-primary">解封</button></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <h3 style="color:#ffd700;margin-bottom:15px">🔑 修改密码</h3>
+                        <div class="form-group">
+                            <label>原密码</label>
+                            <input type="password" placeholder="请输入原密码">
+                        </div>
+                        <div class="form-group">
+                            <label>新密码</label>
+                            <input type="password" placeholder="请输入新密码">
+                        </div>
+                        <div class="form-group">
+                            <label>确认新密码</label>
+                            <input type="password" placeholder="请再次输入新密码">
+                        </div>
+                        <button class="btn btn-primary">💾 修改密码</button>
+                    </div>
+
+                    <div class="stat-card">
+                        <h3 style="color:#ffd700;margin-bottom:15px">📊 安全日志</h3>
+                        <div class="log-viewer" style="max-height:200px">
+                            <div class="log-entry"><span class="log-time">[13:06]</span> admin 登录成功（IP: 192.168.1.100）</div>
+                            <div class="log-entry"><span class="log-time">[12:50]</span> gm01 修改了玩家数据</div>
+                            <div class="log-entry"><span class="log-time">[12:30]</span> admin 删除了物品 #20045</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 模态框：添加玩家 -->
+    <div class="modal" id="player-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>➕ 添加玩家</h3>
+                <button class="close-modal" onclick="closeModal('player-modal')">×</button>
+            </div>
+            <div class="form-group">
+                <label>用户名</label>
+                <input type="text" placeholder="请输入用户名">
+            </div>
+            <div class="form-group">
+                <label>密码</label>
+                <input type="password" placeholder="请输入密码">
+            </div>
+            <div class="form-group">
+                <label>门派</label>
+                <select>
+                    <option>金系</option>
+                    <option>木系</option>
+                    <option>水系</option>
+                    <option>火系</option>
+                    <option>土系</option>
+                </select>
+            </div>
+            <div style="display:flex;gap:10px;margin-top:20px">
+                <button class="btn btn-primary" style="flex:1">✅ 确认添加</button>
+                <button class="btn btn-secondary" style="flex:1" onclick="closeModal('player-modal')">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 模态框：创建物品 -->
+    <div class="modal" id="item-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>➕ 创建物品</h3>
+                <button class="close-modal" onclick="closeModal('item-modal')">×</button>
+            </div>
+            <div class="form-group">
+                <label>物品名称</label>
+                <input type="text" placeholder="请输入物品名称">
+            </div>
+            <div class="form-group">
+                <label>物品类型</label>
+                <select>
+                    <option>武器</option>
+                    <option>防具</option>
+                    <option>饰品</option>
+                    <option>消耗品</option>
+                    <option>材料</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>品质</label>
+                <select>
+                    <option>白色</option>
+                    <option>绿色</option>
+                    <option>蓝色</option>
+                    <option>紫色</option>
+                    <option>橙色</option>
+                </select>
+            </div>
+            <div style="display:flex;gap:10px;margin-top:20px">
+                <button class="btn btn-primary" style="flex:1">✅ 确认创建</button>
+                <button class="btn btn-secondary" style="flex:1" onclick="closeModal('item-modal')">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============ 页面切换 ============
+        function showPage(pageId) {
+            // 隐藏所有页面
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            // 显示目标页面
+            document.getElementById('page-' + pageId).classList.add('active');
+            
+            // 更新菜单状态
+            document.querySelectorAll('.menu-item').forEach(m => m.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+        }
+
+        // ============ 模态框 ============
+        function showModal(modalId) {
+            document.getElementById(modalId).classList.add('active');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+
+        // ============ 数据刷新 ============
+        function refreshData() {
+            // 模拟数据刷新
+            const stats = {
+                'stat-online': Math.floor(Math.random() * 200) + 100,
+                'stat-new-users': Math.floor(Math.random() * 100) + 20,
+                'stat-active': Math.floor(Math.random() * 2000) + 500
+            };
+            
+            Object.entries(stats).forEach(([id, val]) => {
+                const el = document.getElementById(id);
+                if (el) el.textContent = val;
+            });
+
+            alert('✅ 数据已刷新！');
+        }
+
+        // ============ 玩家管理 ============
+        function searchPlayers() {
+            const keyword = document.getElementById('player-search').value.toLowerCase();
+            console.log('搜索玩家:', keyword);
+            // 实际应调用API
+        }
+
+        function filterPlayers() {
+            const sect = document.getElementById('player-filter').value;
+            console.log('筛选门派:', sect);
+        }
+
+        function viewPlayer(id) {
+            alert('查看玩家详情\nID: ' + id + '\n（详情页面开发中...）');
+        }
+
+        function banPlayer(id) {
+            if (confirm('确定要封禁玩家 ' + id + ' 吗？')) {
+                alert('✅ 已封禁玩家 ' + id);
+            }
+        }
+
+        function exportPlayers() {
+            alert('📥 玩家数据导出功能开发中...');
+        }
+
+        // ============ 经济调控 ============
+        function applyEconomySettings() {
+            const settings = {
+                goldRate: document.getElementById('gold-rate').value,
+                goldLimit: document.getElementById('gold-limit').value,
+                goldTax: document.getElementById('gold-tax').value,
+                yuanbaoRate: document.getElementById('yuanbao-rate').value,
+                tradeFee: document.getElementById('trade-fee').value
+            };
+            console.log('保存经济设置:', settings);
+            alert('✅ 经济调控设置已保存！');
+        }
+
+        // ============ 服务器管理 ============
+        function saveServerConfig() {
+            alert('✅ 服务器配置已保存！');
+        }
+
+        function restartServer() {
+            if (confirm('确定要重启服务器吗？所有在线玩家将被断开连接！')) {
+                alert('🔄 服务器重启中...（模拟）');
+            }
+        }
+
+        function shutdownServer() {
+            if (confirm('确定要关闭服务器吗？此操作将断开所有玩家连接！')) {
+                alert('⏹️ 服务器关闭中...（模拟）');
+            }
+        }
+
+        function openNewServer() {
+            const name = prompt('请输入新服名称:', '荣耀之巅');
+            if (name) {
+                alert('✅ 新服「' + name + '」已创建！');
+            }
+        }
+
+        // ============ 日志管理 ============
+        function clearLogs() {
+            if (confirm('确定要清理30天前的日志吗？')) {
+                document.getElementById('log-viewer').innerHTML = '<div style="color:#aaa;text-align:center;padding:20px">日志已清理</div>';
+            }
+        }
+
+        // ============ 初始化 ============
+        console.log('🔧 问道MMO后台管理系统已加载');
+        console.log('📡 连接服务器: http://localhost:3000');
+    </script>
+</body>
+</html>
